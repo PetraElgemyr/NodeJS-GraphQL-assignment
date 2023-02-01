@@ -13,6 +13,11 @@ The assignment is to create a GraphQL API for a shopping cart using NodeJS and A
 - Delete a product
 - Delete a shopping cart
 
+A shopping cart should have an Id, the products in the cart and the total price (total amount) of all the products in the cart.
+The products should have an article number (product Id), unit price and a name.
+
+In this assingment, use JSON-files to save data on the server.
+
 ### Skills
 
 NodeJS, GraphQL, javascript

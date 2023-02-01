@@ -8,7 +8,6 @@ const { argsToArgsConfig } = require('graphql/type/definition')
 const { response } = require('express')
 const axios = require('axios').default
 
-// Create a variable holding the file path (from computer root directory) to the project fiel directory
 const cartDirectory = path.join(__dirname, '..', 'data', 'carts')
 const productDirectory = path.join(__dirname, '../data/products')
 
@@ -181,8 +180,6 @@ exports.resolvers = {
 			totalAmount = 0
 
 			for (let i = 0; i < shoppingcartData.products.length; i++) {
-				//om produktId:t redan finns bland produkternas id:n
-
 				if (shoppingcartData.products[i].productId === productId) {
 					shoppingcartData.products[i].amount++
 
@@ -199,11 +196,10 @@ exports.resolvers = {
 
 			shoppingcartData.products.push(productToAdd)
 
-			//upptadera totalamount
 			for (let i = 0; i < shoppingcartData.products.length; i++) {
 				totalAmount += shoppingcartData.products[i].productPrice * shoppingcartData.products[i].amount
 			}
-			/*********************************** */
+
 			const updatedCart = { cartId, cartName, totalAmount, products }
 			await fsPromises.writeFile(cartFilePath, JSON.stringify(updatedCart))
 
