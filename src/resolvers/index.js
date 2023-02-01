@@ -43,6 +43,37 @@ exports.resolvers = {
 			}
 			return cartData
 		},
+		getProductById: async (_, args) => {
+			const productId = args.productId
+
+			const productFilePath = path.join(productDirectory, `${productId}.json`)
+
+			const productExists = await fileExists(productFilePath)
+
+			if (!productExists) {
+				return new GraphQLError('That product does not exist')
+			}
+
+			const productData = await fsPromises.readFile(productFilePath, { encoding: 'utf-8' })
+
+			const data = JSON.parse(productData)
+
+			return data
+			;('')
+		},
+		getAllProducts: async (_, args) => {
+			const products = await getDirectoryFileNames(productDirectory)
+
+			const productData = []
+
+			for (const file of products) {
+				const filePath = path.join(productDirectory, file)
+				const fileContents = await fsPromises.readFile(filePath, { encoding: 'utf-8' })
+				const data = JSON.parse(fileContents)
+				productData.push(data)
+			}
+			return productData
+		},
 	},
 	Mutation: {
 		createCart: async (_, args) => {

@@ -20,6 +20,8 @@ type DeletedResourceResponse {
 type Query {
 	getCartById(cartId: ID!): Cart
 	getAllCarts: [Cart]
+	getProductById(productId: ID!): Product
+	getAllProducts: [Product]
 }
 
 input CreateProductInput {
