@@ -6,10 +6,18 @@ type Cart {
 }
 
 type Product {
-	productId: ID
+	productId: ProductId
 	productName: String
 	productPrice: Int
 	amount: Int
+}
+
+enum ProductId {
+	PAN1
+	ROSE1
+	TW1
+	KN1
+	CTBRD1
 }
 
 type DeletedResourceResponse {
@@ -34,7 +42,11 @@ type Mutation {
 	deleteCart(cartId: ID!): DeletedResourceResponse
 	createProduct(input: CreateProductInput!): Product
 	deleteProduct(productId: ID!): DeletedResourceResponse
-	addProductToCart(cartId: ID!, productId: ID!): Cart
-	deleteProductFromCart(cartId: ID!, productId: ID!): Cart
+	addProductToCart(cartId: ID!, input: addProductToCartInput!): Cart
+	deleteProductFromCart(cartId: ID!, input: addProductToCartInput!): Cart
 	emptyCart(cartId: ID!): Cart
+}
+
+input addProductToCartInput {
+	productId: ProductId!
 }

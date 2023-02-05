@@ -3,6 +3,8 @@ const fsPromises = require('fs/promises')
 const { fileExists, readJsonFile, deleteFile, getDirectoryFileNames } = require('../utils/fileHandling')
 const { GraphQLError } = require('graphql')
 const crypto = require('node:crypto')
+const { productId } = require('../enums/products')
+
 const { log } = require('console')
 const { argsToArgsConfig } = require('graphql/type/definition')
 const { response } = require('express')
@@ -129,38 +131,6 @@ exports.resolvers = {
 				success: true,
 			}
 		},
-		createProduct: async (_, args) => {
-			const { productName, productPrice } = args.input
-
-			if (productName.length === 0) {
-				return new GraphQLError('The product name must be at least 1 character long')
-			}
-
-			const newProduct = {
-				productId: crypto.randomUUID(),
-				productName: productName,
-				productPrice: productPrice,
-				amount: 1,
-			}
-
-			let filePath = path.join(productDirectory, `${newProduct.productId}.json`)
-
-			let idExists = true
-			while (idExists) {
-				const exists = await fileExists(filePath)
-				console.log(exists, newProduct.productId)
-
-				if (exists) {
-					newProduct.productId = crypto.randomUUID()
-					filePath = path.join(productDirectory, `${newProduct.productId}.json`)
-				}
-				idExists = exists
-			}
-
-			await fsPromises.writeFile(filePath, JSON.stringify(newProduct))
-
-			return newProduct
-		},
 		deleteProduct: async (_, args) => {
 			const productId = args.productId
 
@@ -183,20 +153,21 @@ exports.resolvers = {
 			}
 		},
 		addProductToCart: async (_, args) => {
-			const { cartId, productId } = args
-
-			const cartFilePath = path.join(cartDirectory, `${cartId}.json`)
-			const cartExists = await fileExists(cartFilePath)
-
-			if (!cartExists) {
-				return new GraphQLError('This shopping cart does not exist')
-			}
+			const { cartId } = args
+			const { productId } = args.input
 
 			const productFilePath = path.join(productDirectory, `${productId}.json`)
 			const productExists = await fileExists(productFilePath)
 
 			if (!productExists) {
 				return new GraphQLError('This product does not exist')
+			}
+
+			const cartFilePath = path.join(cartDirectory, `${cartId}.json`)
+			const cartExists = await fileExists(cartFilePath)
+
+			if (!cartExists) {
+				return new GraphQLError('This shopping cart does not exist')
 			}
 
 			const cartData = await fsPromises.readFile(cartFilePath, { encoding: 'utf-8' })
@@ -238,7 +209,8 @@ exports.resolvers = {
 			return updatedCart
 		},
 		deleteProductFromCart: async (_, args) => {
-			const { cartId, productId } = args
+			const { cartId } = args
+			const { productId } = args.input
 
 			const cartFilePath = path.join(cartDirectory, `${cartId}.json`)
 			const cartExists = await fileExists(cartFilePath)
@@ -261,23 +233,29 @@ exports.resolvers = {
 			const productToRemove = JSON.parse(productData)
 			const products = shoppingcartData.products
 
-			let index = products.indexOf(productToRemove)
-			products.splice(index, 1)
-
-			const cartName = shoppingcartData.cartName
-			let totalAmount = shoppingcartData.totalAmount
-			totalAmount = 0
-
 			for (let i = 0; i < shoppingcartData.products.length; i++) {
-				totalAmount += shoppingcartData.products[i].productPrice * shoppingcartData.products[i].amount
+				if (products[i].productId === productId) {
+					products.splice(i, 1)
+
+					const cartName = shoppingcartData.cartName
+					let totalAmount = shoppingcartData.totalAmount
+					totalAmount = 0
+
+					for (let i = 0; i < shoppingcartData.products.length; i++) {
+						totalAmount += shoppingcartData.products[i].productPrice * shoppingcartData.products[i].amount
+					}
+
+					const updatedCart = { cartId, cartName, totalAmount, products }
+
+					await fsPromises.writeFile(cartFilePath, JSON.stringify(updatedCart))
+
+					console.log(updatedCart)
+					return updatedCart
+				}
+				if (products[i].productId !== productId) {
+					return new GraphQLError('This product does not exist in your chosen cart')
+				}
 			}
-
-			const updatedCart = { cartId, cartName, totalAmount, products }
-
-			await fsPromises.writeFile(cartFilePath, JSON.stringify(updatedCart))
-
-			console.log(updatedCart)
-			return updatedCart
 		},
 		emptyCart: async (_, args) => {
 			const { cartId } = args
